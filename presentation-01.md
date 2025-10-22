@@ -9,18 +9,18 @@
 ## План лекції
 
 1. Основи веброзробки
-   - Client-Server архітектура
+   - Архітектура клієнт-сервер
    - HTTP протокол
    - REST архітектурний стиль
 
-2. API Design
+2. Проєктування API
    - Проєктування API
-   - Data Transfer Objects
-   - Dependency Injection
+   - Об'єкти передачі даних
+   - Впровадження залежностей
 
 3. Архітектурні шари
-   - Layered Architecture
-   - Separation of Concerns
+   - Шарувата архітектура
+   - Розділення відповідальності
 
 ---
 
@@ -28,13 +28,13 @@
 
 ---
 
-## Client-Server архітектура
+## Архітектура клієнт-сервер
 
 ```mermaid
 graph LR
-    A[Client<br/>Браузер/Мобільний додаток] -->|HTTP Request| B[Server<br/>Вебсервер/API]
-    B -->|HTTP Response| A
-    B --> C[(Database)]
+    A[Client<br/>Браузер/Мобільний додаток] -->|HTTP запит| B[Server<br/>Вебсервер/API]
+    B -->|HTTP відповідь| A
+    B --> C[(Даніbase)]
 ```
 
 **Client:**
@@ -49,29 +49,29 @@ graph LR
 
 ---
 
-## Request-Response цикл
+## Цикл запит-відповідь
 
 ```mermaid
 sequenceDiagram
     participant C as Client
     participant S as Server
-    participant DB as Database
+    participant DB as Даніbase
     
-    C->>+S: HTTP Request
+    C->>+S: HTTP запит
     S->>S: Валідація
-    S->>+DB: Query
-    DB-->>-S: Data
-    S->>S: Business Logic
-    S-->>-C: HTTP Response
+    S->>+DB: Запит
+    DB-->>-S: Дані
+    S->>S: Бізнес-логіка
+    S-->>-C: HTTP відповідь
 ```
 
 Кожен запит є **незалежним** та **самодостатнім**
 
 ---
 
-## Stateless vs Stateful
+## Без збереження стану vs Зі збереженням стану
 
-### Stateless (рекомендовано)
+### Без збереження стану (рекомендовано)
 
 - Сервер не зберігає стан між запитами
 - Кожен запит містить всю необхідну інформацію
@@ -83,10 +83,10 @@ GET /api/users/123
 Authorization: Bearer eyJhbGc...
 ```
 
-### Stateful
+### Зі збереженням стану
 
 - Сервер зберігає сесії
-- Session affinity (sticky sessions)
+- прив'язка сесії (закріплені сесії)
 - Складніше масштабування
 
 ---
@@ -116,9 +116,9 @@ Accept: application/json
 }
 ```
 
-1. **Request Line:** метод, URI, версія
-2. **Headers:** додаткова інформація
-3. **Body:** дані (опціонально)
+1. **Стартовий рядок:** метод, URI, версія
+2. **Заголовки:** додаткова інформація
+3. **Тіло:** дані (опціонально)
 
 ---
 
@@ -137,15 +137,15 @@ Location: /api/users/123
 }
 ```
 
-1. **Status Line:** версія, код, опис
-2. **Headers:** метадані відповіді
-3. **Body:** дані
+1. **Рядок статусу:** версія, код, опис
+2. **Заголовки:** метадані відповіді
+3. **Тіло:** дані
 
 ---
 
 ## HTTP методи
 
-| Метод | Призначення | Ідемпотентний | Safe |
+| Метод | Призначення | Ідемпотентний | Безпечний |
 |-------|-------------|---------------|------|
 | **GET** | Отримати ресурс | ✅ | ✅ |
 | **POST** | Створити ресурс | ❌ | ❌ |
@@ -180,12 +180,12 @@ POST /api/users        # створює ще одного
 
 ## HTTP Status Codes
 
-### 2xx Success
+### 2xx Успішно
 - **200 OK** - успішний запит
 - **201 Created** - ресурс створено
 - **204 No Content** - успіх без контенту
 
-### 4xx Client Error
+### 4xx Помилка клієнта
 - **400 Bad Request** - невалідні дані
 - **401 Unauthorized** - потрібна автентифікація
 - **403 Forbidden** - доступ заборонено
@@ -196,12 +196,12 @@ POST /api/users        # створює ще одного
 
 ## HTTP Status Codes (продовження)
 
-### 4xx Client Error
+### 4xx Помилка клієнта
 - **422 Unprocessable Entity** - семантичні помилки
 - **429 Too Many Requests** - rate limit
 
-### 5xx Server Error
-- **500 Internal Server Error** - помилка сервера
+### 5xx Помилка сервера
+- **500 Internal Помилка сервера** - помилка сервера
 - **502 Bad Gateway** - помилка upstream
 - **503 Service Unavailable** - сервіс недоступний
 
@@ -244,8 +244,8 @@ Roy Fielding, 2000
 
 ## 6 Принципів REST
 
-1. **Client-Server** - розділення відповідальностей
-2. **Stateless** - без збереження стану
+1. **клієнт-сервер** - розділення відповідальностей
+2. **без збереження стану** - без збереження стану
 3. **Cacheable** - можливість кешування
 4. **Uniform Interface** - єдиний інтерфейс
 5. **Layered System** - шарувата система
@@ -293,7 +293,7 @@ Roy Fielding, 2000
 
 ---
 
-## URI Design Best Practices
+## URI Design Найкращі практики
 
 ### ✅ Добрі практики
 
@@ -361,7 +361,7 @@ graph TD
 GET /api/users/123
 GET /api/users/123/orders
 ```
-Resource-oriented, стандартні методи
+Ресурсо-орієнтоване, стандартні методи
 
 ### RPC
 ```
@@ -383,19 +383,19 @@ query {
 
 ---
 
-# Частина 2. API Design
+# Частина 2. Проєктування API
 
 ---
 
-## Versioning Strategies
+## Версіонування Strategies
 
-### URI Versioning (найпопулярніше)
+### URI Версіонування (найпопулярніше)
 ```
 /api/v1/users
 /api/v2/users
 ```
 
-### Header Versioning
+### Header Версіонування
 ```
 GET /api/users
 API-Version: 2
@@ -410,7 +410,7 @@ Accept: application/vnd.myapi.v2+json
 
 ---
 
-## Pagination Patterns
+## Посторінкова навігація Patterns
 
 ### Offset-Based
 ```
@@ -419,7 +419,7 @@ GET /api/users?offset=20&limit=10
 Response:
 {
   "data": [...],
-  "pagination": {
+  "посторінкова навігація": {
     "offset": 20,
     "limit": 10,
     "total": 150
@@ -432,7 +432,7 @@ Response:
 
 ---
 
-## Pagination Patterns (продовження)
+## Посторінкова навігація Patterns (продовження)
 
 ### Cursor-Based (рекомендовано)
 ```
@@ -441,7 +441,7 @@ GET /api/users?cursor=eyJpZCI6MTIzfQ==&limit=10
 Response:
 {
   "data": [...],
-  "pagination": {
+  "посторінкова навігація": {
     "nextCursor": "eyJpZCI6MTMzfQ==",
     "prevCursor": "eyJpZCI6MTEzfQ==",
     "hasMore": true
@@ -454,22 +454,22 @@ Response:
 
 ---
 
-## Filtering, Sorting, Searching
+## Фільтрація, Сортування, Пошук
 
-### Filtering
+### Фільтрація
 ```
 GET /api/products?category=electronics&price[gte]=100
 GET /api/users?status=active&role=admin
 ```
 
-### Sorting
+### Сортування
 ```
 GET /api/users?sort=name
 GET /api/users?sort=-createdAt        # descending
 GET /api/users?sort=lastName,firstName
 ```
 
-### Searching
+### Пошук
 ```
 GET /api/products?search=laptop
 GET /api/users?q=іван
@@ -477,7 +477,7 @@ GET /api/users?q=іван
 
 ---
 
-## Error Handling
+## Обробка помилок
 
 ### Стандартизована структура
 
@@ -533,7 +533,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Success
+          description: Успішно
           content:
             application/json:
               schema:
@@ -544,7 +544,7 @@ paths:
 
 ---
 
-## Data Transfer Objects (DTO)
+## Об'єкти передачі даних (DTO)
 
 **DTO** - об'єкти для передачі даних між шарами
 
@@ -557,9 +557,9 @@ paths:
 
 ---
 
-## Domain Model vs DTO
+## Доменна модель vs DTO
 
-### Domain Model (внутрішня)
+### Доменна модель (внутрішня)
 ```python
 class User:
     id: int
@@ -585,7 +585,7 @@ class UserResponseDTO:
 
 ---
 
-## Input vs Output DTO
+## Input vs Вихідний DTO
 
 ### CreateUserDTO (input)
 ```python
@@ -631,7 +631,7 @@ class CreateUserDTO:
 
 ---
 
-## Dependency Injection
+## Впровадження залежностей
 
 **DI** - паттерн, де залежності надаються ззовні
 
@@ -676,22 +676,22 @@ service = UserService(InMemoryRepository())
 
 ## Lifetime Scopes
 
-### Transient
+### Тимчасовий
 Новий екземпляр кожного разу
 ```python
-container.register(UserService, lifetime=Transient)
+container.register(UserService, lifetime=Тимчасовий)
 ```
 
-### Scoped
+### Обмежений
 Один екземпляр на HTTP request
 ```python
-container.register(DatabaseContext, lifetime=Scoped)
+container.register(ДаніbaseContext, lifetime=Обмежений)
 ```
 
-### Singleton
+### Одинак
 Один екземпляр на весь застосунок
 ```python
-container.register(Configuration, lifetime=Singleton)
+container.register(Configuration, lifetime=Одинак)
 ```
 
 ---
@@ -700,20 +700,20 @@ container.register(Configuration, lifetime=Singleton)
 
 ---
 
-## Layered Architecture
+## Шарувата архітектура
 
 ```mermaid
 graph TD
-    A[Presentation Layer<br/>Controllers, API] --> B[Business Logic Layer<br/>Services, Domain]
-    B --> C[Data Access Layer<br/>Repositories, ORM]
-    C --> D[(Database)]
+    A[Шар представлення<br/>Controllers, API] --> B[Шар бізнес-логіки<br/>Services, Domain]
+    B --> C[Шар доступу до даних<br/>Repositories, ORM]
+    C --> D[(Даніbase)]
 ```
 
 Кожен шар має **чітку відповідальність**
 
 ---
 
-## Presentation Layer
+## Шар представлення
 
 **Відповідальність:**
 - Приймає HTTP запити
@@ -736,7 +736,7 @@ class UserController:
 
 ---
 
-## Business Logic Layer
+## Шар бізнес-логіки
 
 **Відповідальність:**
 - Бізнес-правила
@@ -760,12 +760,12 @@ class UserService:
 
 ---
 
-## Data Access Layer
+## Шар доступу до даних
 
 **Відповідальність:**
 - Взаємодія з БД
 - Перетворення domain ↔ entity
-- Query optimization
+- Запит optimization
 
 ```python
 class UserRepository:
@@ -803,7 +803,7 @@ class UserRepository:
 
 ---
 
-## Separation of Concerns
+## Розділення відповідальності
 
 **Кожен компонент має одну відповідальність**
 
@@ -833,14 +833,14 @@ class UserService:
 ### Правило залежностей
 
 ```
-Presentation → Business Logic → Domain Model
+Presentation → Бізнес-логіка → Доменна модель
                 ↓
-           Data Access
+           Дані Access
 ```
 
 **Зовнішні шари залежать від внутрішніх**
 
-Domain Model не має залежностей!
+Доменна модель не має залежностей!
 
 ```python
 # ✅ Presentation залежить від Business
@@ -854,7 +854,7 @@ service = UserService()  # не знає про HTTP
 
 ## Domain-Centric Design
 
-Domain Model - **центр застосунку**
+Доменна модель - **центр застосунку**
 
 ```python
 # Domain - незалежний
@@ -888,10 +888,10 @@ graph TB
     
     subgraph Business
         C[Services]
-        D[Domain Models]
+        D[Доменна модельs]
     end
     
-    subgraph Data
+    subgraph Дані
         E[Repositories]
         F[Entities]
     end
@@ -901,7 +901,7 @@ graph TB
     C --> D
     C --> E
     E --> F
-    F --> G[(Database)]
+    F --> G[(Даніbase)]
 ```
 
 ---
@@ -914,3 +914,48 @@ graph TB
 4. **DI** - testable та maintainable код
 5. **Layers** - організація за відповідальностями
 6. **SoC** - кожен компонент має одну мету
+
+---
+
+## Наступні кроки
+
+### Лабораторна робота 1
+
+Проєктування REST API для Task Management системи:
+- Аналіз предметної області
+- Дизайн endpoints
+- Структури даних (DTO)
+- Error handling
+- OpenAPI специфікація
+
+**Без коду** - фокус на **проєктуванні**!
+
+---
+
+## Питання для роздумів
+
+1. Чому stateless краще для масштабування?
+2. Коли використовувати PUT vs PATCH?
+3. Навіщо розділяти CreateDTO та UpdateDTO?
+4. Як тестувати код без DI?
+5. Чому Доменна модель не має залежностей?
+
+---
+
+## Додаткові матеріали
+
+1. Roy Fielding - REST dissertation (2000)
+2. Martin Fowler - PoEAA
+3. RFC 7231 - HTTP/1.1 Semantics
+4. OpenAPI Specification
+5. Richardson Maturity Model
+
+---
+
+## Дякую за увагу!
+
+**Питання?**
+
+Контакт: Roiko.Oleksandr@vnu.edu.ua
+
+Наступна лекція: Конкретні технології та фреймворки

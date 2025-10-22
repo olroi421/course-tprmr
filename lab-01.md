@@ -14,43 +14,48 @@
 
 ## Теоретичні відомості
 
-### REST API Principles
+### Принципи REST API
 
 REST API проєктується навколо концепції ресурсів:
-- Кожен ресурс має унікальний URI
-- Операції виконуються через HTTP методи
-- Використовуються стандартні статус-коди
 
-### HTTP Methods
+- Кожен ресурс має унікальний URI.
+- Операції виконуються через HTTP методи.
+- Використовуються стандартні статус-коди.
 
-- **GET** - отримання ресурсу (безпечний, ідемпотентний)
-- **POST** - створення ресурсу (не ідемпотентний)
-- **PUT** - повне оновлення ресурсу (ідемпотентний)
-- **PATCH** - часткове оновлення ресурсу
-- **DELETE** - видалення ресурсу (ідемпотентний)
+### HTTP методи
 
-### HTTP Status Codes
+- **GET** - отримання ресурсу (безпечний, ідемпотентний).
+- **POST** - створення ресурсу (не ідемпотентний).
+- **PUT** - повне оновлення ресурсу (ідемпотентний).
+- **PATCH** - часткове оновлення ресурсу.
+- **DELETE** - видалення ресурсу (ідемпотентний).
 
-**2xx Success:**
-- 200 OK - успішний GET, PUT, PATCH
-- 201 Created - успішний POST
-- 204 No Content - успішний DELETE
+### HTTP статус-коди
 
-**4xx Client Errors:**
-- 400 Bad Request - невалідні дані
-- 401 Unauthorized - потрібна автентифікація
-- 404 Not Found - ресурс не існує
-- 409 Conflict - конфлікт стану
+**2xx Успішні відповіді:**
 
-**5xx Server Errors:**
-- 500 Internal Server Error - помилка сервера
+- 200 OK - успішний GET, PUT, PATCH.
+- 201 Created - успішний POST.
+- 204 No Content - успішний DELETE.
 
-### Data Transfer Objects (DTO)
+**4xx Помилки клієнта:**
+
+- 400 Bad Request - некоректні дані.
+- 401 Unauthorized - потрібна автентифікація.
+- 404 Not Found - ресурс не існує.
+- 409 Conflict - конфлікт стану.
+
+**5xx Помилки сервера:**
+
+- 500 Internal Server Error - помилка сервера.
+
+### Об'єкти передачі даних (DTO)
 
 DTO відокремлюють внутрішню модель від API:
-- **CreateDTO** - дані для створення (без id)
-- **UpdateDTO** - дані для оновлення (опціональні поля)
-- **ResponseDTO** - дані у відповіді (включає readonly поля)
+
+- **CreateDTO** - дані для створення (без id).
+- **UpdateDTO** - дані для оновлення (необов'язкові поля).
+- **ResponseDTO** - дані у відповіді (включає readonly поля).
 
 ---
 
@@ -61,29 +66,33 @@ DTO відокремлюють внутрішню модель від API:
 ### Функціональні вимоги
 
 **Задачі (Tasks):**
-- Створення задачі
-- Перегляд списку задач
-- Перегляд конкретної задачі
-- Оновлення задачі
-- Видалення задачі
-- Фільтрація за статусом
+
+- Створення задачі.
+- Перегляд списку задач.
+- Перегляд конкретної задачі.
+- Оновлення задачі.
+- Видалення задачі.
+- Фільтрація за статусом.
 
 **Користувачі (Users):**
-- Перегляд списку користувачів
-- Перегляд конкретного користувача
+
+- Перегляд списку користувачів.
+- Перегляд конкретного користувача.
 
 ### Атрибути
 
 **Task:**
-- Назва (обов'язково, 3-200 символів)
-- Опис (опціонально, max 1000 символів)
-- Статус: todo, in_progress, done
-- Пріоритет: low, medium, high
-- Дата створення (автоматично)
+
+- Назва (обов'язково, 3-200 символів).
+- Опис (необов'язково, максимум 1000 символів).
+- Статус: todo, in_progress, done.
+- Пріоритет: low, medium, high.
+- Дата створення (автоматично).
 
 **User:**
-- Ім'я
-- Email
+
+- Ім'я.
+- Email.
 
 ---
 
@@ -100,12 +109,12 @@ DTO відокремлюють внутрішню модель від API:
 
 ---
 
-### Частина 2. Дизайн API Endpoints (30 хв)
+### Частина 2. Проєктування кінцевих точок API (30 хв)
 
-Створіть таблицю endpoints (мінімум 7):
+Створіть таблицю кінцевих точок (мінімум 7):
 
-| HTTP Method | URI Path | Опис | Status Codes |
-|-------------|----------|------|--------------|
+| HTTP метод | Шлях URI | Опис | Статус-коди |
+|------------|----------|------|-------------|
 | GET | /api/tasks | Список задач | 200, 401 |
 | GET | /api/tasks/{id} | Конкретна задача | 200, 404, 401 |
 | POST | /api/tasks | Створити задачу | 201, 400, 401 |
@@ -121,6 +130,7 @@ GET /api/tasks?priority=high&status=in_progress
 ```
 
 **Питання для роздумів:**
+
 1. Чому GET /api/tasks/{id} повертає 404, коли задача не існує?
 2. Чому DELETE повертає 204, а не 200?
 3. Яка різниця між PUT та PATCH?
@@ -131,7 +141,7 @@ GET /api/tasks?priority=high&status=in_progress
 
 Опишіть JSON структури:
 
-**Task Response:**
+**Відповідь Task:**
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -146,23 +156,23 @@ GET /api/tasks?priority=high&status=in_progress
 **CreateTaskDTO:**
 ```json
 {
-  "title": "string (required, 3-200 chars)",
-  "description": "string (optional, max 1000 chars)",
-  "priority": "low | medium | high (default: medium)"
+  "title": "string (обов'язково, 3-200 символів)",
+  "description": "string (необов'язково, максимум 1000 символів)",
+  "priority": "low | medium | high (за замовчуванням: medium)"
 }
 ```
 
 **UpdateTaskDTO:**
 ```json
 {
-  "title": "string (optional, 3-200 chars)",
-  "description": "string (optional, max 1000 chars)",
-  "status": "todo | in_progress | done (optional)",
-  "priority": "low | medium | high (optional)"
+  "title": "string (необов'язково, 3-200 символів)",
+  "description": "string (необов'язково, максимум 1000 символів)",
+  "status": "todo | in_progress | done (необов'язково)",
+  "priority": "low | medium | high (необов'язково)"
 }
 ```
 
-**User Response:**
+**Відповідь User:**
 ```json
 {
   "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
@@ -175,8 +185,8 @@ GET /api/tasks?priority=high&status=in_progress
 ```json
 {
   "data": [
-    { /* Task object */ },
-    { /* Task object */ }
+    { /* об'єкт Task */ },
+    { /* об'єкт Task */ }
   ],
   "total": 42
 }
@@ -184,7 +194,7 @@ GET /api/tasks?priority=high&status=in_progress
 
 ---
 
-### Частина 4. Error Handling (25 хв)
+### Частина 4. Обробка помилок (25 хв)
 
 **Стандартна структура помилки:**
 ```json
@@ -197,26 +207,26 @@ GET /api/tasks?priority=high&status=in_progress
 }
 ```
 
-**Основні error codes:**
+**Основні коди помилок:**
 
-| HTTP Status | Error Code | Приклад |
-|-------------|------------|---------|
-| 400 | VALIDATION_ERROR | "Title is required" |
-| 401 | AUTHENTICATION_REQUIRED | "Token is missing" |
-| 404 | RESOURCE_NOT_FOUND | "Task not found" |
-| 409 | CONFLICT | "Task already exists" |
-| 500 | INTERNAL_ERROR | "Server error" |
+| HTTP статус | Код помилки | Приклад |
+|-------------|-------------|---------|
+| 400 | VALIDATION_ERROR | "Назва обов'язкова" |
+| 401 | AUTHENTICATION_REQUIRED | "Відсутній токен" |
+| 404 | RESOURCE_NOT_FOUND | "Задачу не знайдено" |
+| 409 | CONFLICT | "Задача вже існує" |
+| 500 | INTERNAL_ERROR | "Помилка сервера" |
 
-**Приклад validation error:**
+**Приклад помилки валідації:**
 ```json
 {
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "Validation failed",
+    "message": "Не вдалося пройти валідацію",
     "details": [
       {
         "field": "title",
-        "message": "Title must be at least 3 characters"
+        "message": "Назва повинна містити щонайменше 3 символи"
       }
     ],
     "timestamp": "2025-10-21T10:30:00Z"
@@ -224,12 +234,12 @@ GET /api/tasks?priority=high&status=in_progress
 }
 ```
 
-**Приклад not found error:**
+**Приклад помилки відсутності ресурсу:**
 ```json
 {
   "error": {
     "code": "RESOURCE_NOT_FOUND",
-    "message": "Task with id '123' not found",
+    "message": "Задачу з ідентифікатором '123' не знайдено",
     "timestamp": "2025-10-21T10:30:00Z"
   }
 }
@@ -237,11 +247,11 @@ GET /api/tasks?priority=high&status=in_progress
 
 ---
 
-### Частина 5. Додатково (Опціонально, +1 бал)
+### Частина 5. Додатково (необов'язково, +1 бал)
 
-**Опція А:** Опишіть 2-3 endpoints у форматі OpenAPI 3.0
+**Опція А:** Опишіть 2-3 кінцеві точки у форматі OpenAPI 3.0
 
-**Опція Б:** Додайте pagination та розширені фільтри
+**Опція Б:** Додайте посторінкову навігацію та розширені фільтри
 
 ---
 
@@ -263,17 +273,17 @@ GET /api/tasks?priority=high&status=in_progress
 | Task | ... |
 | User | ... |
 
-## 2. API Endpoints
+## 2. Кінцеві точки API
 
-| HTTP Method | URI Path | Опис | Status Codes |
-|-------------|----------|------|--------------|
+| HTTP метод | Шлях URI | Опис | Статус-коди |
+|------------|----------|------|-------------|
 | ... | ... | ... | ... |
 
-**Пояснення:** [Чому обрали такі endpoints]
+**Пояснення:** [Чому обрали такі кінцеві точки]
 
 ## 3. Структури даних
 
-### Task Response
+### Відповідь Task
 \```json
 {...}
 \```
@@ -288,12 +298,12 @@ GET /api/tasks?priority=high&status=in_progress
 {...}
 \```
 
-### User Response
+### Відповідь User
 \```json
 {...}
 \```
 
-### Error Response
+### Відповідь помилки
 \```json
 {...}
 \```
@@ -320,36 +330,41 @@ GET /api/tasks?priority=high&status=in_progress
 | Критерій | Бали | Що оцінюється |
 |----------|------|---------------|
 | Аналіз | 0.5 | Ресурси та атрибути |
-| Endpoints | 1.5 | HTTP методи, URI, статус-коди |
-| Структури | 1.0 | JSON для Task, User, DTO, Error |
-| Error handling | 0.5 | Структура та codes |
+| Кінцеві точки | 1.5 | HTTP методи, URI, статус-коди |
+| Структури | 1.0 | JSON для Task, User, DTO, помилки |
+| Обробка помилок | 0.5 | Структура та коди |
 | Відповіді | 0.5 | Розуміння REST |
 | **Бонус** | +1.0 | OpenAPI або розширення |
 
 ### Як отримати максимум:
 
 ✅ **0.5 за аналіз:**
-- Task та User описані з атрибутами
 
-✅ **1.5 за endpoints:**
-- Мінімум 7 правильних endpoints
-- Правильні HTTP методи
-- REST URI (іменники, множина)
-- Правильні статус-коди
+- Task та User описані з атрибутами.
+
+✅ **1.5 за кінцеві точки:**
+
+- Мінімум 7 правильних кінцевих точок.
+- Правильні HTTP методи.
+- REST URI (іменники, множина).
+- Правильні статус-коди.
 
 ✅ **1.0 за структури:**
-- Task Response
-- CreateTaskDTO та UpdateTaskDTO (різні!)
-- User Response
-- Error Response
 
-✅ **0.5 за errors:**
-- Стандартна структура
-- Мінімум 5 error codes
-- 2 приклади
+- Відповідь Task.
+- CreateTaskDTO та UpdateTaskDTO (різні!).
+- Відповідь User.
+- Відповідь помилки.
+
+✅ **0.5 за помилки:**
+
+- Стандартна структура.
+- Мінімум 5 кодів помилок.
+- 2 приклади.
 
 ✅ **0.5 за питання:**
-- Обґрунтовані відповіді
+
+- Обґрунтовані відповіді.
 
 ---
 
@@ -360,7 +375,7 @@ GET /api/tasks?priority=high&status=in_progress
 3. Який статус-код для успішного DELETE: 200 чи 204?
 4. Як правильно називати URI: іменники чи дієслова?
 5. Що означає "ідемпотентний" метод?
-6. Коли використовувати 404 vs 400?
+6. Коли використовувати 404 замість 400?
 
 ---
 
@@ -394,11 +409,11 @@ GET /api/tasks?priority=high&status=in_progress
 
 ✅ **Робіть так:**
 
-- Іменники у множині: `/api/tasks`
-- Правильні HTTP методи для операцій
-- Різні DTO для create/update/response
-- Стандартизовані помилки з codes
-- ISO 8601 для дат: `2025-10-21T10:30:00Z`
+- Іменники у множині: `/api/tasks`.
+- Правильні HTTP методи для операцій.
+- Різні DTO для створення/оновлення/відповіді.
+- Стандартизовані помилки з кодами.
+- ISO 8601 для дат: `2025-10-21T10:30:00Z`.
 
 ---
 
@@ -411,10 +426,10 @@ GET /api/tasks?priority=high&status=in_progress
 | Task | id (UUID), title (string), description (string), status (enum), priority (enum), createdAt (datetime) |
 | User | id (UUID), name (string), email (string) |
 
-### 2. API Endpoints
+### 2. Кінцеві точки API
 
-| HTTP Method | URI Path | Опис | Status Codes |
-|-------------|----------|------|--------------|
+| HTTP метод | Шлях URI | Опис | Статус-коди |
+|------------|----------|------|-------------|
 | GET | /api/tasks | Отримати список всіх задач | 200, 401 |
 | GET | /api/tasks?status=done | Фільтр за статусом | 200, 401 |
 | GET | /api/tasks/{id} | Отримати задачу за ID | 200, 404, 401 |
@@ -425,7 +440,7 @@ GET /api/tasks?priority=high&status=in_progress
 | GET | /api/users | Отримати список користувачів | 200, 401 |
 | GET | /api/users/{id} | Отримати користувача за ID | 200, 404, 401 |
 
-**Пояснення:** Використовуємо REST conventions - іменники у множині, стандартні HTTP методи. GET для читання, POST для створення, PUT для повного оновлення, DELETE для видалення. Фільтрація через query parameters.
+**Пояснення:** Використовуємо конвенції REST - іменники у множині, стандартні HTTP методи. GET для читання, POST для створення, PUT для повного оновлення, DELETE для видалення. Фільтрація через параметри запиту.
 
 ---
 
