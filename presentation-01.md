@@ -1,0 +1,961 @@
+# Лекція 1. Архітектура сучасних вебдодатків
+
+**Технології проектування та розробки мережевих ресурсів**
+
+Викладач: Ройко О.Ю.
+
+---
+
+## План лекції
+
+1. Основи веброзробки
+   - Client-Server архітектура
+   - HTTP протокол
+   - REST архітектурний стиль
+
+2. API Design
+   - Проєктування API
+   - Data Transfer Objects
+   - Dependency Injection
+
+3. Архітектурні шари
+   - Layered Architecture
+   - Separation of Concerns
+
+---
+
+# Частина 1. Основи веброзробки
+
+---
+
+## Client-Server архітектура
+
+```mermaid
+graph LR
+    A[Client<br/>Браузер/Мобільний додаток] -->|HTTP Request| B[Server<br/>Вебсервер/API]
+    B -->|HTTP Response| A
+    B --> C[(Database)]
+```
+
+**Client:**
+- Ініціює запити
+- Відображає дані
+- Управляє локальним станом
+
+**Server:**
+- Обробляє запити
+- Виконує бізнес-логіку
+- Забезпечує безпеку
+
+---
+
+## Request-Response цикл
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant DB as Database
+    
+    C->>+S: HTTP Request
+    S->>S: Валідація
+    S->>+DB: Query
+    DB-->>-S: Data
+    S->>S: Business Logic
+    S-->>-C: HTTP Response
+```
+
+Кожен запит є **незалежним** та **самодостатнім**
+
+---
+
+## Stateless vs Stateful
+
+### Stateless (рекомендовано)
+
+- Сервер не зберігає стан між запитами
+- Кожен запит містить всю необхідну інформацію
+- Легко масштабується горизонтально
+- Вища надійність
+
+```http
+GET /api/users/123
+Authorization: Bearer eyJhbGc...
+```
+
+### Stateful
+
+- Сервер зберігає сесії
+- Session affinity (sticky sessions)
+- Складніше масштабування
+
+---
+
+## HTTP протокол
+
+**HTTP (HyperText Transfer Protocol)** - протокол прикладного рівня для передачі даних
+
+Версії: HTTP/1.1, HTTP/2, HTTP/3
+
+Основа всієї веб-комунікації
+
+---
+
+## Структура HTTP запиту
+
+```http
+POST /api/users HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+Authorization: Bearer eyJhbGc...
+Accept: application/json
+
+{
+  "name": "Іван Петренко",
+  "email": "ivan@example.com"
+}
+```
+
+1. **Request Line:** метод, URI, версія
+2. **Headers:** додаткова інформація
+3. **Body:** дані (опціонально)
+
+---
+
+## Структура HTTP відповіді
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+Location: /api/users/123
+
+{
+  "id": "123",
+  "name": "Іван Петренко",
+  "email": "ivan@example.com",
+  "createdAt": "2025-10-21T10:30:00Z"
+}
+```
+
+1. **Status Line:** версія, код, опис
+2. **Headers:** метадані відповіді
+3. **Body:** дані
+
+---
+
+## HTTP методи
+
+| Метод | Призначення | Ідемпотентний | Safe |
+|-------|-------------|---------------|------|
+| **GET** | Отримати ресурс | ✅ | ✅ |
+| **POST** | Створити ресурс | ❌ | ❌ |
+| **PUT** | Оновити повністю | ✅ | ❌ |
+| **PATCH** | Оновити частково | ❌ | ❌ |
+| **DELETE** | Видалити | ✅ | ❌ |
+| **HEAD** | Отримати headers | ✅ | ✅ |
+| **OPTIONS** | Отримати методи | ✅ | ✅ |
+
+---
+
+## Ідемпотентність
+
+**Ідемпотентна операція** - повторне виконання дає той самий результат
+
+```python
+# Ідемпотентно
+DELETE /api/users/123  # перший раз: видалено
+DELETE /api/users/123  # другий раз: вже видалено (404)
+
+PUT /api/users/123     # оновлення з тими самими даними
+PUT /api/users/123     # результат ідентичний
+
+# Не ідемпотентно
+POST /api/users        # створює нового користувача
+POST /api/users        # створює ще одного
+```
+
+Важливо для **retry logic** при мережевих збоях
+
+---
+
+## HTTP Status Codes
+
+### 2xx Success
+- **200 OK** - успішний запит
+- **201 Created** - ресурс створено
+- **204 No Content** - успіх без контенту
+
+### 4xx Client Error
+- **400 Bad Request** - невалідні дані
+- **401 Unauthorized** - потрібна автентифікація
+- **403 Forbidden** - доступ заборонено
+- **404 Not Found** - ресурс не знайдено
+- **409 Conflict** - конфлікт стану
+
+---
+
+## HTTP Status Codes (продовження)
+
+### 4xx Client Error
+- **422 Unprocessable Entity** - семантичні помилки
+- **429 Too Many Requests** - rate limit
+
+### 5xx Server Error
+- **500 Internal Server Error** - помилка сервера
+- **502 Bad Gateway** - помилка upstream
+- **503 Service Unavailable** - сервіс недоступний
+
+**Правило:** завжди використовуйте правильний статус-код!
+
+---
+
+## Важливі HTTP заголовки
+
+```http
+# Автентифікація
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+
+# Тип контенту
+Content-Type: application/json; charset=utf-8
+Accept: application/json
+
+# Кешування
+Cache-Control: max-age=3600, private
+ETag: "33a64df551425fcc55e4d42a148795d9f25f89d4"
+
+# CORS
+Access-Control-Allow-Origin: https://example.com
+Access-Control-Allow-Methods: GET, POST, PUT
+```
+
+---
+
+## REST архітектурний стиль
+
+**REST (Representational State Transfer)**
+
+Архітектурний стиль для розподілених гіпермедійних систем
+
+Roy Fielding, 2000
+
+Не протокол, а набір **принципів та обмежень**
+
+---
+
+## 6 Принципів REST
+
+1. **Client-Server** - розділення відповідальностей
+2. **Stateless** - без збереження стану
+3. **Cacheable** - можливість кешування
+4. **Uniform Interface** - єдиний інтерфейс
+5. **Layered System** - шарувата система
+6. **Code-On-Demand** (опціонально)
+
+---
+
+## Resource-Oriented Design
+
+У REST все є **ресурсом**:
+- Документ
+- Колекція
+- Об'єкт предметної області
+- Процес
+
+Кожен ресурс має **унікальний URI**
+
+```
+/api/users              # колекція користувачів
+/api/users/123          # конкретний користувач
+/api/users/123/orders   # замовлення користувача
+/api/orders/456         # конкретне замовлення
+```
+
+---
+
+## CRUD через HTTP методи
+
+```
+Створити    POST   /api/users
+Прочитати   GET    /api/users/123
+Оновити     PUT    /api/users/123
+Видалити    DELETE /api/users/123
+
+Список      GET    /api/users
+Часткове    PATCH  /api/users/123
+```
+
+**Правило:** використовуйте іменники, а не дієслова в URI
+
+```
+✅ POST /api/orders
+❌ POST /api/createOrder
+```
+
+---
+
+## URI Design Best Practices
+
+### ✅ Добрі практики
+
+```
+/api/users                    # множина
+/api/products/123             # ідентифікатор
+/api/users/123/orders         # вкладені ресурси
+/api/products?category=tech   # фільтри
+/api/user-profiles            # kebab-case
+```
+
+### ❌ Погані практики
+
+```
+/api/getUsers                 # дієслово
+/api/user                     # однина
+/api/users/orders/items/...   # занадто глибоко
+/api/userProfiles             # camelCase
+```
+
+---
+
+## HATEOAS
+
+**Hypermedia As The Engine Of Application State**
+
+Відповідь містить **посилання** на пов'язані ресурси
+
+```json
+{
+  "id": "123",
+  "name": "Іван Петренко",
+  "_links": {
+    "self": { "href": "/api/users/123" },
+    "orders": { "href": "/api/users/123/orders" },
+    "edit": { 
+      "href": "/api/users/123",
+      "method": "PUT" 
+    }
+  }
+}
+```
+
+На практиці рідко реалізується повністю
+
+---
+
+## Richardson Maturity Model
+
+```mermaid
+graph TD
+    A[Level 0: Single URI, Single Method<br/>RPC Style] --> B[Level 1: Multiple URIs<br/>Resources]
+    B --> C[Level 2: HTTP Methods<br/>REST]
+    C --> D[Level 3: HATEOAS<br/>Hypermedia]
+```
+
+Більшість API досягають рівня 2
+
+---
+
+## REST vs RPC vs GraphQL
+
+### REST
+```
+GET /api/users/123
+GET /api/users/123/orders
+```
+Resource-oriented, стандартні методи
+
+### RPC
+```
+POST /api/getUser
+POST /api/getUserOrders
+```
+Action-oriented, всі через POST
+
+### GraphQL
+```graphql
+query {
+  user(id: "123") {
+    name
+    orders { id, total }
+  }
+}
+```
+Клієнт визначає структуру відповіді
+
+---
+
+# Частина 2. API Design
+
+---
+
+## Versioning Strategies
+
+### URI Versioning (найпопулярніше)
+```
+/api/v1/users
+/api/v2/users
+```
+
+### Header Versioning
+```
+GET /api/users
+API-Version: 2
+```
+
+### Content Negotiation
+```
+Accept: application/vnd.myapi.v2+json
+```
+
+**Рекомендація:** URI для публічних API, Header для internal
+
+---
+
+## Pagination Patterns
+
+### Offset-Based
+```
+GET /api/users?offset=20&limit=10
+
+Response:
+{
+  "data": [...],
+  "pagination": {
+    "offset": 20,
+    "limit": 10,
+    "total": 150
+  }
+}
+```
+
+**Переваги:** простота, перехід на довільну сторінку  
+**Недоліки:** проблеми при змінах даних
+
+---
+
+## Pagination Patterns (продовження)
+
+### Cursor-Based (рекомендовано)
+```
+GET /api/users?cursor=eyJpZCI6MTIzfQ==&limit=10
+
+Response:
+{
+  "data": [...],
+  "pagination": {
+    "nextCursor": "eyJpZCI6MTMzfQ==",
+    "prevCursor": "eyJpZCI6MTEzfQ==",
+    "hasMore": true
+  }
+}
+```
+
+**Переваги:** стабільність, продуктивність  
+**Недоліки:** неможливість довільної сторінки
+
+---
+
+## Filtering, Sorting, Searching
+
+### Filtering
+```
+GET /api/products?category=electronics&price[gte]=100
+GET /api/users?status=active&role=admin
+```
+
+### Sorting
+```
+GET /api/users?sort=name
+GET /api/users?sort=-createdAt        # descending
+GET /api/users?sort=lastName,firstName
+```
+
+### Searching
+```
+GET /api/products?search=laptop
+GET /api/users?q=іван
+```
+
+---
+
+## Error Handling
+
+### Стандартизована структура
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "details": [
+      {
+        "field": "email",
+        "message": "Invalid email format",
+        "code": "INVALID_FORMAT"
+      }
+    ],
+    "timestamp": "2025-10-21T10:30:00Z",
+    "path": "/api/users",
+    "requestId": "550e8400-e29b-41d4-a716-446655440000"
+  }
+}
+```
+
+---
+
+## Error Codes Mapping
+
+| Status | Code | Приклад |
+|--------|------|---------|
+| 400 | VALIDATION_ERROR | Невалідний email |
+| 401 | AUTHENTICATION_REQUIRED | Токен відсутній |
+| 403 | INSUFFICIENT_PERMISSIONS | Недостатньо прав |
+| 404 | RESOURCE_NOT_FOUND | Користувач не знайдений |
+| 409 | RESOURCE_ALREADY_EXISTS | Email вже зареєстрований |
+| 422 | BUSINESS_RULE_VIOLATION | Вік менше 18 |
+| 429 | RATE_LIMIT_EXCEEDED | Забагато запитів |
+
+---
+
+## API Documentation
+
+### OpenAPI (Swagger)
+
+```yaml
+openapi: 3.0.0
+paths:
+  /api/users:
+    get:
+      summary: Get all users
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserList'
+```
+
+**Автогенерація** з коду!
+
+---
+
+## Data Transfer Objects (DTO)
+
+**DTO** - об'єкти для передачі даних між шарами
+
+### Навіщо?
+
+1. **Безпека** - контроль над тим, що відправляємо
+2. **Валідація** - перевірка вхідних даних
+3. **Відокремлення** - API contract ≠ Domain model
+4. **Оптимізація** - лише потрібні поля
+
+---
+
+## Domain Model vs DTO
+
+### Domain Model (внутрішня)
+```python
+class User:
+    id: int
+    username: str
+    email: str
+    password_hash: str      # ніколи не відправляємо!
+    internal_notes: str     # тільки для адмінів
+    created_at: datetime
+    
+    def change_password(self, new_password):
+        # бізнес-логіка
+```
+
+### DTO (зовнішня)
+```python
+class UserResponseDTO:
+    id: str                 # UUID замість int
+    username: str
+    email: str
+    created_at: datetime
+    # без паролю та внутрішніх полів!
+```
+
+---
+
+## Input vs Output DTO
+
+### CreateUserDTO (input)
+```python
+class CreateUserDTO:
+    username: str       # required, 3-20 chars
+    email: str         # required, valid email
+    password: str      # required, min 8 chars
+    age: int          # optional, min 18
+```
+
+### UserResponseDTO (output)
+```python
+class UserResponseDTO:
+    id: str
+    username: str
+    email: str
+    created_at: datetime
+    updated_at: datetime
+```
+
+**Різні DTO** для різних операцій!
+
+---
+
+## Input Validation
+
+### Типи валідації
+
+1. **Типізація** - перевірка типів даних
+2. **Формат** - email, URL, UUID
+3. **Діапазон** - min/max значення
+4. **Pattern** - регулярні вирази
+5. **Бізнес-правила** - складна логіка
+
+```python
+class CreateUserDTO:
+    username: str  # min:3, max:20, pattern: ^[a-zA-Z0-9_]+$
+    age: int       # min:18, max:120
+    email: str     # format: email
+```
+
+**Fail fast** - валідуйте якомога раніше!
+
+---
+
+## Dependency Injection
+
+**DI** - паттерн, де залежності надаються ззовні
+
+### Без DI (tight coupling)
+```python
+class UserService:
+    def __init__(self):
+        self.repo = UserRepository()  # ❌
+```
+
+### З DI (loose coupling)
+```python
+class UserService:
+    def __init__(self, repo: IUserRepository):
+        self.repo = repo  # ✅
+```
+
+---
+
+## Переваги DI
+
+### 1. Testability
+```python
+def test_create_user():
+    mock_repo = MockUserRepository()
+    service = UserService(mock_repo)  # легко тестувати!
+    
+    result = service.create_user(...)
+    assert mock_repo.save_called
+```
+
+### 2. Flexibility
+```python
+# Production
+service = UserService(PostgresRepository())
+
+# Development
+service = UserService(InMemoryRepository())
+```
+
+---
+
+## Lifetime Scopes
+
+### Transient
+Новий екземпляр кожного разу
+```python
+container.register(UserService, lifetime=Transient)
+```
+
+### Scoped
+Один екземпляр на HTTP request
+```python
+container.register(DatabaseContext, lifetime=Scoped)
+```
+
+### Singleton
+Один екземпляр на весь застосунок
+```python
+container.register(Configuration, lifetime=Singleton)
+```
+
+---
+
+# Частина 3. Архітектурні шари
+
+---
+
+## Layered Architecture
+
+```mermaid
+graph TD
+    A[Presentation Layer<br/>Controllers, API] --> B[Business Logic Layer<br/>Services, Domain]
+    B --> C[Data Access Layer<br/>Repositories, ORM]
+    C --> D[(Database)]
+```
+
+Кожен шар має **чітку відповідальність**
+
+---
+
+## Presentation Layer
+
+**Відповідальність:**
+- Приймає HTTP запити
+- Валідує вхідні дані (DTO)
+- Викликає бізнес-логіку
+- Форматує відповіді
+
+```python
+class UserController:
+    def __init__(self, service: UserService):
+        self.service = service
+        
+    def create_user(self, request):
+        dto = CreateUserDTO.from_request(request)
+        user = self.service.create_user(dto)
+        return UserResponse.from_domain(user), 201
+```
+
+**Без бізнес-логіки!**
+
+---
+
+## Business Logic Layer
+
+**Відповідальність:**
+- Бізнес-правила
+- Валідація domain правил
+- Координація операцій
+- Транзакції
+
+```python
+class UserService:
+    def create_user(self, dto: CreateUserDTO):
+        # Бізнес-правило
+        if self.repository.exists_by_email(dto.email):
+            raise DuplicateEmailError()
+            
+        user = User.from_dto(dto)
+        user.validate()
+        self.repository.save(user)
+        self.email_service.send_welcome_email(user)
+        return user
+```
+
+---
+
+## Data Access Layer
+
+**Відповідальність:**
+- Взаємодія з БД
+- Перетворення domain ↔ entity
+- Query optimization
+
+```python
+class UserRepository:
+    def save(self, user: User):
+        entity = UserEntity.from_domain(user)
+        self.db.add(entity)
+        self.db.commit()
+        
+    def get_by_id(self, user_id: str) -> User:
+        entity = self.db.query(UserEntity).get(user_id)
+        return entity.to_domain()
+```
+
+**Ізоляція від деталей БД**
+
+---
+
+## Чому розділяти шари?
+
+### Переваги
+
+1. **Maintainability** - легше знайти та змінити код
+2. **Testability** - кожен шар тестується окремо
+3. **Reusability** - бізнес-логіка використовується різними clients
+4. **Team collaboration** - паралельна робота
+5. **Technology independence** - легко змінити БД/UI
+
+```python
+# Та сама бізнес-логіка для:
+- REST API
+- GraphQL
+- CLI
+- Message Queue handlers
+```
+
+---
+
+## Separation of Concerns
+
+**Кожен компонент має одну відповідальність**
+
+### Single Responsibility Principle
+
+❌ **Погано:**
+```python
+class UserService:
+    def create_user(self, data):
+        # Валідація, SQL, Email, Логування...
+        # Занадто багато!
+```
+
+✅ **Добре:**
+```python
+class UserService:
+    def create_user(self, dto: CreateUserDTO):
+        user = User.from_dto(dto)
+        self.repository.save(user)
+        self.email_service.send_welcome(user)
+```
+
+---
+
+## Boundaries між шарами
+
+### Правило залежностей
+
+```
+Presentation → Business Logic → Domain Model
+                ↓
+           Data Access
+```
+
+**Зовнішні шари залежать від внутрішніх**
+
+Domain Model не має залежностей!
+
+```python
+# ✅ Presentation залежить від Business
+controller = UserController(user_service)
+
+# ❌ Business НЕ залежить від Presentation
+service = UserService()  # не знає про HTTP
+```
+
+---
+
+## Domain-Centric Design
+
+Domain Model - **центр застосунку**
+
+```python
+# Domain - незалежний
+class Order:
+    def add_item(self, item):
+        if self.is_confirmed:
+            raise InvalidOperationError()
+        self.items.append(item)
+
+# Business - використовує Domain
+class OrderService:
+    def create_order(self, items):
+        order = Order()
+        for item in items:
+            order.add_item(item)  # domain логіка!
+        return order
+```
+
+Інфраструктура служить Domain, а не навпаки
+
+---
+
+## Архітектурна діаграма
+
+```mermaid
+graph TB
+    subgraph Presentation
+        A[Controllers]
+        B[DTOs]
+    end
+    
+    subgraph Business
+        C[Services]
+        D[Domain Models]
+    end
+    
+    subgraph Data
+        E[Repositories]
+        F[Entities]
+    end
+    
+    A --> C
+    B --> C
+    C --> D
+    C --> E
+    E --> F
+    F --> G[(Database)]
+```
+
+---
+
+## Ключові takeaways
+
+1. **HTTP** - фундамент веб-комунікації
+2. **REST** - принципи для проєктування API
+3. **DTO** - розділення domain та API contract
+4. **DI** - testable та maintainable код
+5. **Layers** - організація за відповідальностями
+6. **SoC** - кожен компонент має одну мету
+
+---
+
+## Наступні кроки
+
+### Лабораторна робота 1
+
+Проєктування REST API для Task Management системи:
+- Аналіз предметної області
+- Дизайн endpoints
+- Структури даних (DTO)
+- Error handling
+- OpenAPI специфікація
+
+**Без коду** - фокус на **проєктуванні**!
+
+---
+
+## Питання для роздумів
+
+1. Чому stateless краще для масштабування?
+2. Коли використовувати PUT vs PATCH?
+3. Навіщо розділяти CreateDTO та UpdateDTO?
+4. Як тестувати код без DI?
+5. Чому Domain Model не має залежностей?
+
+---
+
+## Додаткові матеріали
+
+1. Roy Fielding - REST dissertation (2000)
+2. Martin Fowler - PoEAA
+3. RFC 7231 - HTTP/1.1 Semantics
+4. OpenAPI Specification
+5. Richardson Maturity Model
+
+---
+
+## Дякую за увагу!
+
+**Питання?**
+
+Контакт: Roiko.Oleksandr@vnu.edu.ua
+
+Наступна лекція: Конкретні технології та фреймворки
