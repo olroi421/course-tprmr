@@ -53,7 +53,7 @@
 
 #### Підходи без збереження стану та зі збереженням стану
 
-**підхід без збереження стану** означає, що сервер не зберігає інформацію про попередні запити від клієнта. Кожен запит містить всю необхідну інформацію для його обробки. Переваги цього підходу:
+**Підхід без збереження стану** означає, що сервер не зберігає інформацію про попередні запити від клієнта. Кожен запит містить всю необхідну інформацію для його обробки. Переваги цього підходу:
 
 - Простіше масштабування, оскільки будь-який сервер може обробити будь-який запит.
 - Вища надійність через відсутність стану, який може бути втрачений.
@@ -66,7 +66,7 @@
 - Додаткові витрати на повторну автентифікацію та валідацію.
 - Складніше реалізувати деякі сценарії, які природно вимагають збереження стану.
 
-**підхід зі збереженням стану** передбачає, що сервер зберігає інформацію про сесію клієнта між запитами. Це може бути зручно для деяких застосунків, але створює складнощі:
+**Підхід зі збереженням стану** передбачає, що сервер зберігає інформацію про сесію клієнта між запитами. Це може бути зручно для деяких застосунків, але створює складнощі:
 
 - Прив'язка клієнта до конкретного серверу (прив'язка сесії).
 - Складніше масштабування через необхідність синхронізації стану.
@@ -77,7 +77,7 @@
 
 ---
 
-### 1.2. HTTP протокол глибше
+### 1.2. HTTP протокол
 
 HTTP є протоколом прикладного рівня, який визначає формат повідомлень та правила взаємодії між клієнтами та серверами у вебі. Розуміння внутрішньої структури HTTP є критично важливим для розробки ефективних вебдодатків.
 
@@ -792,7 +792,7 @@ class User:
     email: str
     password_hash: str  # ніколи не відправляємо
     internal_notes: str  # внутрішня інформація
-    
+
 # DTO для відповіді
 class UserResponseDTO:
     id: str  # UUID замість внутрішнього int
@@ -817,11 +817,11 @@ class CreateUserDTO:
 # Повна модель
 class Article:
     id, title, content, author, tags, comments, metadata...
-    
+
 # DTO для списку (мінімум даних)
 class ArticleListItemDTO:
     id, title, author_name, created_at
-    
+
 # DTO для детального перегляду
 class ArticleDetailDTO:
     id, title, content, author, tags, comments_count
@@ -836,15 +836,15 @@ class Order:
     def __init__(self):
         self.items = []
         self.status = OrderStatus.DRAFT
-        
+
     def add_item(self, item):
         if self.status != OrderStatus.DRAFT:
             raise InvalidOperationError("Cannot modify confirmed order")
         self.items.append(item)
-        
+
     def calculate_total(self):
         return sum(item.price * item.quantity for item in self.items)
-        
+
     def confirm(self):
         if not self.items:
             raise ValidationError("Cannot confirm empty order")
@@ -857,7 +857,7 @@ class Order:
 class CreateOrderDTO:
     items: List[OrderItemDTO]
     shipping_address: AddressDTO
-    
+
 class OrderResponseDTO:
     id: str
     items: List[OrderItemDTO]
@@ -899,7 +899,7 @@ class CreateOrderDTO:
     items: List[OrderItemDTO]  # min items: 1
     shipping_address: AddressDTO  # required
     billing_address: Optional[AddressDTO]  # optional
-    
+
     def validate(self):
         if not self.items:
             raise ValidationError("Order must contain at least one item")
@@ -970,13 +970,13 @@ def test_create_user():
     # Створюємо mock залежності
     mock_repo = MockUserRepository()
     mock_email = MockEmailService()
-    
+
     # Інжектимо їх у сервіс
     service = UserService(mock_repo, mock_email)
-    
+
     # Тестуємо без реальної БД та email
     result = service.create_user("ivan", "ivan@example.com")
-    
+
     assert mock_repo.save_called
     assert mock_email.send_called
 ```
@@ -1032,14 +1032,14 @@ container.register(Configuration, lifetime=Singleton)
 class UserController:
     def __init__(self, user_service: UserService):
         self.user_service = user_service
-        
+
     def create_user(self, request: CreateUserRequest):
         # 1. Валідація вхідних даних
         dto = CreateUserDTO.from_request(request)
-        
+
         # 2. Виклик бізнес-логіки
         user = self.user_service.create_user(dto)
-        
+
         # 3. Форматування відповіді
         return UserResponse.from_domain(user), 201
 ```
@@ -1052,32 +1052,32 @@ Presentation layer не містить бізнес-логіки, лише ма�
 
 ```python
 class UserService:
-    def __init__(self, user_repository: IUserRepository, 
+    def __init__(self, user_repository: IUserRepository,
                  email_service: IEmailService):
         self.user_repository = user_repository
         self.email_service = email_service
-        
+
     def create_user(self, dto: CreateUserDTO):
         # Бізнес-правила
         if self.user_repository.exists_by_email(dto.email):
             raise DuplicateEmailError("Email already registered")
-            
+
         # Створення domain об'єкта
         user = User(
             username=dto.username,
             email=dto.email,
             password_hash=hash_password(dto.password)
         )
-        
+
         # Валідація domain правил
         user.validate()
-        
+
         # Збереження
         self.user_repository.save(user)
-        
+
         # Side effects
         self.email_service.send_welcome_email(user.email)
-        
+
         return user
 ```
 
@@ -1091,20 +1091,20 @@ Business layer не знає про HTTP, JSON чи базу даних - пра
 class UserRepository(IUserRepository):
     def __init__(self, db_context: DatabaseContext):
         self.db = db_context
-        
+
     def save(self, user: User):
         # Перетворення domain model в database entity
         entity = UserEntity.from_domain(user)
         self.db.users.add(entity)
         self.db.commit()
-        
+
     def get_by_id(self, user_id: str) -> Optional[User]:
         entity = self.db.users.filter_by(id=user_id).first()
         if not entity:
             return None
         # Перетворення database entity в domain model
         return entity.to_domain()
-        
+
     def exists_by_email(self, email: str) -> bool:
         return self.db.users.filter_by(email=email).count() > 0
 ```
@@ -1125,7 +1125,7 @@ def test_create_user_duplicate_email():
     mock_repo = MockUserRepository()
     mock_repo.exists_by_email = lambda email: True
     service = UserService(mock_repo, MockEmailService())
-    
+
     with pytest.raises(DuplicateEmailError):
         service.create_user(dto)
 ```
@@ -1154,16 +1154,16 @@ class UserService:
         # Валідація
         if not validate_email(data['email']):
             raise ValidationError()
-        
+
         # Хешування паролю
         password_hash = bcrypt.hash(data['password'])
-        
+
         # SQL запит
         cursor.execute("INSERT INTO users ...")
-        
+
         # Відправка email
         smtp.send_email(...)
-        
+
         # Логування
         logger.info(...)
 ```
@@ -1178,7 +1178,7 @@ class UserService:
         self.repository = repository
         self.email_service = email_service
         self.logger = logger
-        
+
     def create_user(self, dto: CreateUserDTO):
         # dto вже провалідоване
         user = User.from_dto(dto)
@@ -1229,7 +1229,7 @@ class Order:
         if self.is_confirmed:
             raise InvalidOperationError()
         self.items.append(item)
-        
+
     def calculate_total(self):
         return sum(item.subtotal for item in self.items)
 

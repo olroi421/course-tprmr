@@ -34,7 +34,7 @@
 graph LR
     A[Client<br/>Браузер/Мобільний додаток] -->|HTTP запит| B[Server<br/>Вебсервер/API]
     B -->|HTTP відповідь| A
-    B --> C[(Даніbase)]
+    B --> C[(Database)]
 ```
 
 **Client:**
@@ -55,8 +55,8 @@ graph LR
 sequenceDiagram
     participant C as Client
     participant S as Server
-    participant DB as Даніbase
-    
+    participant DB as Database
+
     C->>+S: HTTP запит
     S->>S: Валідація
     S->>+DB: Запит
@@ -71,22 +71,17 @@ sequenceDiagram
 
 ## Без збереження стану vs Зі збереженням стану
 
-### Без збереження стану (рекомендовано)
+### Stateless (Без збереження стану (рекомендовано))
 
 - Сервер не зберігає стан між запитами
 - Кожен запит містить всю необхідну інформацію
 - Легко масштабується горизонтально
 - Вища надійність
 
-```http
-GET /api/users/123
-Authorization: Bearer eyJhbGc...
-```
-
-### Зі збереженням стану
+### Stateful (Зі збереженням стану)
 
 - Сервер зберігає сесії
-- прив'язка сесії (закріплені сесії)
+- Прив'язка сесії (закріплені сесії)
 - Складніше масштабування
 
 ---
@@ -174,8 +169,6 @@ POST /api/users        # створює нового користувача
 POST /api/users        # створює ще одного
 ```
 
-Важливо для **retry logic** при мережевих збоях
-
 ---
 
 ## HTTP Status Codes
@@ -191,12 +184,6 @@ POST /api/users        # створює ще одного
 - **403 Forbidden** - доступ заборонено
 - **404 Not Found** - ресурс не знайдено
 - **409 Conflict** - конфлікт стану
-
----
-
-## HTTP Status Codes (продовження)
-
-### 4xx Помилка клієнта
 - **422 Unprocessable Entity** - семантичні помилки
 - **429 Too Many Requests** - rate limit
 
@@ -236,16 +223,14 @@ Access-Control-Allow-Methods: GET, POST, PUT
 
 Архітектурний стиль для розподілених гіпермедійних систем
 
-Roy Fielding, 2000
-
 Не протокол, а набір **принципів та обмежень**
 
 ---
 
 ## 6 Принципів REST
 
-1. **клієнт-сервер** - розділення відповідальностей
-2. **без збереження стану** - без збереження стану
+1. **Клієнт-сервер** - розділення відповідальностей
+2. **Stateless** - без збереження стану
 3. **Cacheable** - можливість кешування
 4. **Uniform Interface** - єдиний інтерфейс
 5. **Layered System** - шарувата система
@@ -329,9 +314,9 @@ Roy Fielding, 2000
   "_links": {
     "self": { "href": "/api/users/123" },
     "orders": { "href": "/api/users/123/orders" },
-    "edit": { 
+    "edit": {
       "href": "/api/users/123",
-      "method": "PUT" 
+      "method": "PUT"
     }
   }
 }
@@ -352,36 +337,6 @@ graph TD
 
 Більшість API досягають рівня 2
 
----
-
-## REST vs RPC vs GraphQL
-
-### REST
-```
-GET /api/users/123
-GET /api/users/123/orders
-```
-Ресурсо-орієнтоване, стандартні методи
-
-### RPC
-```
-POST /api/getUser
-POST /api/getUserOrders
-```
-Action-oriented, всі через POST
-
-### GraphQL
-```graphql
-query {
-  user(id: "123") {
-    name
-    orders { id, total }
-  }
-}
-```
-Клієнт визначає структуру відповіді
-
----
 
 # Частина 2. Проєктування API
 
@@ -410,7 +365,7 @@ Accept: application/vnd.myapi.v2+json
 
 ---
 
-## Посторінкова навігація Patterns
+## Посторінкова навігація (пагінація)
 
 ### Offset-Based
 ```
@@ -419,7 +374,7 @@ GET /api/users?offset=20&limit=10
 Response:
 {
   "data": [...],
-  "посторінкова навігація": {
+  "pagination": {
     "offset": 20,
     "limit": 10,
     "total": 150
@@ -427,12 +382,10 @@ Response:
 }
 ```
 
-**Переваги:** простота, перехід на довільну сторінку  
+**Переваги:** простота, перехід на довільну сторінку
 **Недоліки:** проблеми при змінах даних
 
 ---
-
-## Посторінкова навігація Patterns (продовження)
 
 ### Cursor-Based (рекомендовано)
 ```
@@ -441,7 +394,7 @@ GET /api/users?cursor=eyJpZCI6MTIzfQ==&limit=10
 Response:
 {
   "data": [...],
-  "посторінкова навігація": {
+  "pagination": {
     "nextCursor": "eyJpZCI6MTMzfQ==",
     "prevCursor": "eyJpZCI6MTEzfQ==",
     "hasMore": true
@@ -449,7 +402,7 @@ Response:
 }
 ```
 
-**Переваги:** стабільність, продуктивність  
+**Переваги:** стабільність, продуктивність
 **Недоліки:** неможливість довільної сторінки
 
 ---
@@ -568,7 +521,7 @@ class User:
     password_hash: str      # ніколи не відправляємо!
     internal_notes: str     # тільки для адмінів
     created_at: datetime
-    
+
     def change_password(self, new_password):
         # бізнес-логіка
 ```
@@ -658,7 +611,7 @@ class UserService:
 def test_create_user():
     mock_repo = MockUserRepository()
     service = UserService(mock_repo)  # легко тестувати!
-    
+
     result = service.create_user(...)
     assert mock_repo.save_called
 ```
@@ -674,28 +627,6 @@ service = UserService(InMemoryRepository())
 
 ---
 
-## Lifetime Scopes
-
-### Тимчасовий
-Новий екземпляр кожного разу
-```python
-container.register(UserService, lifetime=Тимчасовий)
-```
-
-### Обмежений
-Один екземпляр на HTTP request
-```python
-container.register(ДаніbaseContext, lifetime=Обмежений)
-```
-
-### Одинак
-Один екземпляр на весь застосунок
-```python
-container.register(Configuration, lifetime=Одинак)
-```
-
----
-
 # Частина 3. Архітектурні шари
 
 ---
@@ -706,7 +637,7 @@ container.register(Configuration, lifetime=Одинак)
 graph TD
     A[Шар представлення<br/>Controllers, API] --> B[Шар бізнес-логіки<br/>Services, Domain]
     B --> C[Шар доступу до даних<br/>Repositories, ORM]
-    C --> D[(Даніbase)]
+    C --> D[(Database)]
 ```
 
 Кожен шар має **чітку відповідальність**
@@ -725,7 +656,7 @@ graph TD
 class UserController:
     def __init__(self, service: UserService):
         self.service = service
-        
+
     def create_user(self, request):
         dto = CreateUserDTO.from_request(request)
         user = self.service.create_user(dto)
@@ -750,7 +681,7 @@ class UserService:
         # Бізнес-правило
         if self.repository.exists_by_email(dto.email):
             raise DuplicateEmailError()
-            
+
         user = User.from_dto(dto)
         user.validate()
         self.repository.save(user)
@@ -773,7 +704,7 @@ class UserRepository:
         entity = UserEntity.from_domain(user)
         self.db.add(entity)
         self.db.commit()
-        
+
     def get_by_id(self, user_id: str) -> User:
         entity = self.db.query(UserEntity).get(user_id)
         return entity.to_domain()
@@ -793,17 +724,9 @@ class UserRepository:
 4. **Team collaboration** - паралельна робота
 5. **Technology independence** - легко змінити БД/UI
 
-```python
-# Та сама бізнес-логіка для:
-- REST API
-- GraphQL
-- CLI
-- Message Queue handlers
-```
-
 ---
 
-## Розділення відповідальності
+## Розділення відповідальності (Separation of Concerns (SoC))
 
 **Кожен компонент має одну відповідальність**
 
@@ -885,28 +808,28 @@ graph TB
         A[Controllers]
         B[DTOs]
     end
-    
+
     subgraph Business
         C[Services]
         D[Доменна модельs]
     end
-    
+
     subgraph Дані
         E[Repositories]
         F[Entities]
     end
-    
+
     A --> C
     B --> C
     C --> D
     C --> E
     E --> F
-    F --> G[(Даніbase)]
+    F --> G[(Database)]
 ```
 
 ---
 
-## Ключові takeaways
+## Ключові висновки
 
 1. **HTTP** - фундамент веб-комунікації
 2. **REST** - принципи для проєктування API
@@ -914,48 +837,3 @@ graph TB
 4. **DI** - testable та maintainable код
 5. **Layers** - організація за відповідальностями
 6. **SoC** - кожен компонент має одну мету
-
----
-
-## Наступні кроки
-
-### Лабораторна робота 1
-
-Проєктування REST API для Task Management системи:
-- Аналіз предметної області
-- Дизайн endpoints
-- Структури даних (DTO)
-- Error handling
-- OpenAPI специфікація
-
-**Без коду** - фокус на **проєктуванні**!
-
----
-
-## Питання для роздумів
-
-1. Чому stateless краще для масштабування?
-2. Коли використовувати PUT vs PATCH?
-3. Навіщо розділяти CreateDTO та UpdateDTO?
-4. Як тестувати код без DI?
-5. Чому Доменна модель не має залежностей?
-
----
-
-## Додаткові матеріали
-
-1. Roy Fielding - REST dissertation (2000)
-2. Martin Fowler - PoEAA
-3. RFC 7231 - HTTP/1.1 Semantics
-4. OpenAPI Specification
-5. Richardson Maturity Model
-
----
-
-## Дякую за увагу!
-
-**Питання?**
-
-Контакт: Roiko.Oleksandr@vnu.edu.ua
-
-Наступна лекція: Конкретні технології та фреймворки
