@@ -700,41 +700,6 @@ Presentation → Бізнес-логіка → Доменна модель
 
 **Зовнішні шари залежать від внутрішніх**
 
-Доменна модель не має залежностей!
-
-```python
-# ✅ Presentation залежить від Business
-controller = UserController(user_service)
-
-# ❌ Business НЕ залежить від Presentation
-service = UserService()  # не знає про HTTP
-```
-
----
-
-## Domain-Centric Design
-
-Доменна модель - **центр застосунку**
-
-```python
-# Domain - незалежний
-class Order:
-    def add_item(self, item):
-        if self.is_confirmed:
-            raise InvalidOperationError()
-        self.items.append(item)
-
-# Business - використовує Domain
-class OrderService:
-    def create_order(self, items):
-        order = Order()
-        for item in items:
-            order.add_item(item)  # domain логіка!
-        return order
-```
-
-Інфраструктура служить Domain, а не навпаки
-
 ---
 
 ## Архітектурна діаграма
@@ -770,6 +735,5 @@ graph TB
 
 1. **HTTP** - фундамент веб-комунікації
 2. **REST** - принципи для проєктування API
-3. **DTO** - розділення domain та API contract
-4. **Layers** - організація за відповідальностями
-5. **SoC** - кожен компонент має одну мету
+3. **Layers** - організація за відповідальностями
+4. **SoC** - кожен компонент має одну мету
