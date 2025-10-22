@@ -1,0 +1,56 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# Build/Output directories
+build/
+dist/
+out/
+
+# Node modules (якщо використовуєте Node.js)
+node_modules/
+
+# Python (якщо використовуєте Python)
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+
+# Compiled files
+*.class
+*.exe
+*.dll
+*.so
+*.dylib
