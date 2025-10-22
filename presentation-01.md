@@ -713,7 +713,7 @@ graph TB
 
     subgraph Business
         C[Services]
-        D[Доменна модельs]
+        D[Доменна модель]
     end
 
     subgraph Дані
