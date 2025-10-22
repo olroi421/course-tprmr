@@ -342,7 +342,7 @@ graph TD
 
 ---
 
-## Версіонування Strategies
+## Версіонування
 
 ### URI Версіонування (найпопулярніше)
 ```
@@ -538,7 +538,7 @@ class UserResponseDTO:
 
 ---
 
-## Input vs Вихідний DTO
+## Input vs Output DTO
 
 ### CreateUserDTO (input)
 ```python
@@ -561,69 +561,6 @@ class UserResponseDTO:
 
 **Різні DTO** для різних операцій!
 
----
-
-## Input Validation
-
-### Типи валідації
-
-1. **Типізація** - перевірка типів даних
-2. **Формат** - email, URL, UUID
-3. **Діапазон** - min/max значення
-4. **Pattern** - регулярні вирази
-5. **Бізнес-правила** - складна логіка
-
-```python
-class CreateUserDTO:
-    username: str  # min:3, max:20, pattern: ^[a-zA-Z0-9_]+$
-    age: int       # min:18, max:120
-    email: str     # format: email
-```
-
-**Fail fast** - валідуйте якомога раніше!
-
----
-
-## Впровадження залежностей
-
-**DI** - паттерн, де залежності надаються ззовні
-
-### Без DI (tight coupling)
-```python
-class UserService:
-    def __init__(self):
-        self.repo = UserRepository()  # ❌
-```
-
-### З DI (loose coupling)
-```python
-class UserService:
-    def __init__(self, repo: IUserRepository):
-        self.repo = repo  # ✅
-```
-
----
-
-## Переваги DI
-
-### 1. Testability
-```python
-def test_create_user():
-    mock_repo = MockUserRepository()
-    service = UserService(mock_repo)  # легко тестувати!
-
-    result = service.create_user(...)
-    assert mock_repo.save_called
-```
-
-### 2. Flexibility
-```python
-# Production
-service = UserService(PostgresRepository())
-
-# Development
-service = UserService(InMemoryRepository())
-```
 
 ---
 
@@ -834,6 +771,5 @@ graph TB
 1. **HTTP** - фундамент веб-комунікації
 2. **REST** - принципи для проєктування API
 3. **DTO** - розділення domain та API contract
-4. **DI** - testable та maintainable код
-5. **Layers** - організація за відповідальностями
-6. **SoC** - кожен компонент має одну мету
+4. **Layers** - організація за відповідальностями
+5. **SoC** - кожен компонент має одну мету
