@@ -1,18 +1,4 @@
-# Презентація: Python для веброзробки та FastAPI основи
-
----
-
-## Зміст лекції
-
-- Python Type Hints та їх роль у FastAPI
-- Асинхронне програмування: async/await, asyncio
-- Введення у FastAPI: переваги та можливості
-- Перший FastAPI застосунок
-- Pydantic Models для валідації
-- Path, Query та Body Parameters
-- Автоматична документація
-
----
+# Python для веброзробки та FastAPI основи
 
 ## Python Type Hints
 
